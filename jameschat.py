@@ -7,31 +7,39 @@ class Jameschat():
     Initializes message reception and necessary variables
     '''
     self.ip_address = socket.gethostbyname(socket.gethostname())
-    self.main_recv_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    self.main_recv_port = 5_000
-    self.main_recv_socket.bind((self.ip_address, self.recv_port))
-
+    self.recv_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    self.recv_port = 5_000
+    self.recv_socket.bind((self.ip_address, self.recv_port))
+  
     self.send_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 
-  def init_send(self, tgt_ip):
+  def init_send(self, tgt_ip, tgt_port):
     '''
     Initializes message sending
     '''
-    self.send_socket.connect(tgt_ip)
-    raise NotImplementedError
+    self.send_socket.connect((tgt_ip, tgt_port))
 
+    raise NotImplementedError
+    
   def decode_msg(self, msg):
     '''
     Decodes a message
     '''
-    raise NotImplementedError
+    msg = msg.decode('UTF-8')
+    msg = str(msg)
+    msg = msg.split('|')
 
-  def send(self, tgt_address, tgt_port, cmd, msg=None):
+    return msg
+ 
+
+  def send(self, cmd, msg=None):
     '''
     Sends msg to the tgt_port at tgt_address.
-    msg must be a JameschatMessage.
     '''
+    self.send_socket.send(bytes(f'{self.ip_address}|{self.recv_port}|{cmd}|{msg}|',
+                           'UTF-8'))
+    
     raise NotImplementedError
   
   
@@ -50,38 +58,66 @@ class Jameschat():
     raise NotImplementedError
 
 
-  class JameschatServer(self):
+  class JameschatServer():
 
     def __init__(self):
       self.client_list = []
 
-    def add_client(self):
+
+    def server_send(self, client_num, cmd, msg):
+      '''
+      Server sending, sends to client specified by IP and port
+      '''
+      sockety = client_list[client_num]
+      sockety = sockety['sendto_socket']
+
+      sockety.send(bytes(f'{self.ip_address}|{self.recv_port}|{cmd}|{msg}|',
+                        'UTF-8'))
+
+
+    def add_client(self, ip, port):
       '''
       Adds a client to the client list
       '''
-      raise NotImplementedError
+      self.client_list.append({
+        "client_IP": ip,
+        "client_port": port,
+        "sendto_socket": socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect(ip, port)
+      })
+
     
     def ping(self):
       '''
-      Sends a ping message to all connected IPs
+      Sends a PING command to all connected IPs
       '''
-      raise NotImplementedError
+      for item in self.client_list:
+        self.server_send(item['client_IP'], item['client_port'], 'PING')
 
 
-  class JameschatClient(self):
+  class JameschatClient():
 
     def __init__(self):
       raise NotImplementedError
     
     
-    def init_send(server_ip, server_port):
+    def connect_to_server(self, ip, port):
       '''
-      Initializes sending capabilities to the server
+      Attempts to connect to the server at IP on port.
+      Initializes sending and recieving capabilities.
       '''
-  
+      try:
+        self.init_send(ip, port)
 
-    def connect_to_server(self):
-      raise NotImplementedError
+      except:
+        raise ConnectionError
+      
+      try:
+        self.recv_socket.bind((self.ip_address, self.main_recv_port))
+      
+      except:
+        raise ConnectionError
+      
+
     
     
     
