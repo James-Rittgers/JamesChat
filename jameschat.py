@@ -1,4 +1,5 @@
 import socket
+import sys
 
 class Jameschat():
 
@@ -48,14 +49,41 @@ class Jameschat():
     Listens for the specific command specified by cmd.
     Will run until timeout or it recieves the message.
     '''
-    raise NotImplementedError
+    self.main_recv_socket.listen(5)
+    try:
+        connection, address = self.main_recv_socket.accept()
+        recv_buffer = connection.recv(64)
+
+        if len(recv_buffer) > 0:
+            msg = process_msg(recv_buffer)
+            
+            if msg[2] == cmd:
+              return 
+
+            else:
+              self.listen_for_cmd(cmd)
+
+    except TimeoutError:
+        print('Timeout') 
+        sys.exit() 
   
   def listen(self):
     '''
     Listens for any messages. 
     Will run until timeout or it recieves any message, and will return the message.
     '''
-    raise NotImplementedError
+    self.main_recv_socket.listen(5)
+    try:
+        connection, address = self.main_recv_socket.accept()
+        recv_buffer = connection.recv(64)
+
+        if len(recv_buffer) > 0:
+            msg = process_msg(recv_buffer)
+            return msg
+
+    except TimeoutError:
+        print('Timeout') 
+        sys.exit() 
 
 
   class JameschatServer():
@@ -117,6 +145,14 @@ class Jameschat():
       except:
         raise ConnectionError
       
+    def pinged(self):
+      '''
+      Listens for ping then responds to server.
+      '''
+      self.listen_for_cmd('PING')
+
+
+
 
     
     
