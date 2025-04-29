@@ -1,6 +1,7 @@
 import socket
 import sys
 from random import randint
+from time import sleep
 
 class Jameschat():
 
@@ -136,7 +137,7 @@ class JameschatServer(Jameschat):
     '''
 
     msg = self.listen_for_cmd('CLIENT-CONN')
-
+    print(msg)
     self.add_client(msg[0], msg[1])
 
     self.server_send(self.ips[msg[0]])
