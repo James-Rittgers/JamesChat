@@ -152,25 +152,14 @@ class JameschatClient(Jameschat):
     Initializes sending and recieving capabilities.
     Returns True if connection successful.
     '''
-    try:
-      self.init_send(ip, port)
 
-    except:
-      raise ConnectionError
-    
-    try:
-      self.recv_socket.bind((self.ip_address, self.main_recv_port))
+    self.init_send(ip, port)
 
-      self.send_socket.connect((ip, port))
+    self.send(cmd='CLIENT-CONN')
 
-      self.send(cmd='CLIENT-CONN')
+    self.listen_for_cmd('CONN-OK')
 
-      self.listen_for_cmd('CONN-OK')
-
-      return True
-    
-    except:
-      raise ConnectionError
+    return True
     
   def pinged(self):
     '''
