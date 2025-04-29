@@ -22,7 +22,6 @@ class Jameschat():
     '''
     self.send_socket.connect((tgt_ip, tgt_port))
 
-    raise NotImplementedError
     
 
   def decode_msg(self, msg):
@@ -43,7 +42,7 @@ class Jameschat():
     self.send_socket.send(bytes(f'{self.ip_address}|{self.recv_port}|{cmd}|{msg}|',
                            'UTF-8'))
     
-    raise NotImplementedError
+ 
   
   
   def listen_for_cmd(self, cmd):
