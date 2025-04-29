@@ -35,11 +35,11 @@ class Jameschat():
     return msg
  
 
-  def send(self, cmd, ip, port, msg=None):
+  def send(self, cmd, msg=None):
     '''
     Sends msg to the tgt_port at tgt_address.
     '''
-    self.send_socket.send(bytes(f'{ip}|{port}|{cmd}|{msg}',
+    self.send_socket.send(bytes(f'{self.ip_address}|{self.recv_port}|{cmd}|{msg}|',
                            'UTF-8'))
     
  
@@ -154,6 +154,11 @@ class JameschatClient(Jameschat):
     '''
 
     self.init_send(ip, port)
+
+    
+
+
+    self.send_socket.connect((ip, port))
 
     self.send(cmd='CLIENT-CONN')
 
