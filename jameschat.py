@@ -1,5 +1,6 @@
 import socket
 import sys
+from random import randint
 
 class Jameschat():
 
@@ -9,7 +10,7 @@ class Jameschat():
     '''
     self.ip_address = socket.gethostbyname(socket.gethostname())
     self.recv_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    self.recv_port = 5_000
+    self.recv_port = randint(1000, 1050)
     self.recv_socket.bind((self.ip_address, self.recv_port))
   
     self.send_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -23,6 +24,7 @@ class Jameschat():
 
     raise NotImplementedError
     
+
   def decode_msg(self, msg):
     '''
     Decodes a message
@@ -48,17 +50,19 @@ class Jameschat():
     '''
     Listens for the specific command specified by cmd.
     Will run until timeout or it recieves the message.
+    Returns the message.
     '''
-    self.main_recv_socket.listen(5)
+    self.recv_socket.listen(5)
+
     try:
-        connection, address = self.main_recv_socket.accept()
+        connection, address = self.recv_socket.accept()
         recv_buffer = connection.recv(64)
 
         if len(recv_buffer) > 0:
-            msg = process_msg(recv_buffer)
+            msg = self.decode_msg(recv_buffer)
             
             if msg[2] == cmd:
-              return 
+              return msg
 
             else:
               self.listen_for_cmd(cmd)
@@ -72,13 +76,14 @@ class Jameschat():
     Listens for any messages. 
     Will run until timeout or it recieves any message, and will return the message.
     '''
-    self.main_recv_socket.listen(5)
+    self.recv_socket.listen(5)
+
     try:
-        connection, address = self.main_recv_socket.accept()
+        connection, address = self.recv_socket.accept()
         recv_buffer = connection.recv(64)
 
         if len(recv_buffer) > 0:
-            msg = process_msg(recv_buffer)
+            msg = self.decode_msg(recv_buffer)
             return msg
 
     except TimeoutError:
@@ -86,75 +91,90 @@ class Jameschat():
         sys.exit() 
 
 
-  class JameschatServer():
+class JameschatServer(Jameschat):
 
-    def __init__(self):
-      self.client_list = []
-
-
-    def server_send(self, client_num, cmd, msg):
-      '''
-      Server sending, sends to client specified by IP and port
-      '''
-      sockety = client_list[client_num]
-      sockety = sockety['sendto_socket']
-
-      sockety.send(bytes(f'{self.ip_address}|{self.recv_port}|{cmd}|{msg}|',
-                        'UTF-8'))
+  def __init__(self):
+    super().__init__()
+    self.client_list = []
+    self.ips = {}
 
 
-    def add_client(self, ip, port):
-      '''
-      Adds a client to the client list
-      '''
-      self.client_list.append({
-        "client_IP": ip,
-        "client_port": port,
-        "sendto_socket": socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect(ip, port)
-      })
+  def server_send(self, client_num, cmd, msg):
+    '''
+    Server sending, sends to client specified by IP and port
+    '''
+    sockety = self.client_list[client_num]
+    sockety = sockety['sendto_socket']
 
+    sockety.send(bytes(f'{self.ip_address}|{self.recv_port}|{cmd}|{msg}|',
+                      'UTF-8'))
+
+
+  def add_client(self, ip, port):
+    '''
+    Adds a client to the client list
+    '''
+    self.client_list.append({
+      "client_IP": ip,
+      "client_port": port,
+      "sendto_socket": socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect(ip, port)
+    })
+
+    self.ips[ip:len(self.client_list) -1]
+
+  
+  def ping(self):
+    '''
+    Sends a PING command to all connected IPs
+    '''
+    for item in self.client_list:
+      self.server_send(item['client_IP'], item['client_port'], 'PING')
+
+  def allow_connection(self):
+    '''
+    Allows connection. 
+    Exits when one device is connected.
+    '''
+
+    msg = self.listen_for_cmd('CLIENT-CONN')
+
+    self.add_client(msg[0], msg[1])
+
+    self.server_send(self.ips[msg[0]])
+
+
+
+
+class JameschatClient(Jameschat):  
+  
+  def connect_to_server(self, ip, port):
+    '''
+    Attempts to connect to the server at IP on port.
+    Initializes sending and recieving capabilities.
+    Returns True if connection successful.
+    '''
+    try:
+      self.init_send(ip, port)
+
+    except:
+      raise ConnectionError
     
-    def ping(self):
-      '''
-      Sends a PING command to all connected IPs
-      '''
-      for item in self.client_list:
-        self.server_send(item['client_IP'], item['client_port'], 'PING')
+    try:
+      self.recv_socket.bind((self.ip_address, self.main_recv_port))
 
+      self.send_socket.connect((ip, port))
 
-  class JameschatClient():
+      self.send(cmd='CLIENT-CONN')
 
-    def __init__(self):
-      raise NotImplementedError
+      self.listen_for_cmd('CONN-OK')
+
+      return True
     
+    except:
+      raise ConnectionError
     
-    def connect_to_server(self, ip, port):
-      '''
-      Attempts to connect to the server at IP on port.
-      Initializes sending and recieving capabilities.
-      '''
-      try:
-        self.init_send(ip, port)
-
-      except:
-        raise ConnectionError
-      
-      try:
-        self.recv_socket.bind((self.ip_address, self.main_recv_port))
-      
-      except:
-        raise ConnectionError
-      
-    def pinged(self):
-      '''
-      Listens for ping then responds to server.
-      '''
-      self.listen_for_cmd('PING')
-
-
-
-
-    
-    
-    
-
+  def pinged(self):
+    '''
+    Listens for ping then responds to server.
+    '''
+    self.listen_for_cmd('PING')
