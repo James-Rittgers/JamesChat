@@ -32,7 +32,7 @@ class Jameschat():
     msg = msg.decode('UTF-8')
     msg = str(msg)
     msg = msg.split('|')
-
+    print(msg)
     return msg
  
 
@@ -55,17 +55,21 @@ class Jameschat():
     self.recv_socket.listen(5)
 
     try:
+        print('something happening!')
         connection, address = self.recv_socket.accept()
+        print('okayy...')
         recv_buffer = connection.recv(64)
+        print('OKKAYYYY...')
 
         if len(recv_buffer) > 0:
+            print('something recieved')
             msg = self.decode_msg(recv_buffer)
             
             if msg[2] == cmd:
+              print(msg)
               return msg
 
-            else:
-              self.listen_for_cmd(cmd)
+            print(msg)
 
     except TimeoutError:
         print('Timeout') 
@@ -156,10 +160,6 @@ class JameschatClient(Jameschat):
 
     self.init_send(ip, port)
 
-    
-
-
-    self.send_socket.connect((ip, port))
 
     self.send(cmd='CLIENT-CONN')
 
