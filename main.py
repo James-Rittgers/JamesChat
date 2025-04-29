@@ -16,7 +16,7 @@ if choice == '1':
 elif choice == '2':
   this_inst = jameschat.JameschatClient()
   ipy = input('Enter server IP\n> ')
-  porty = input('Enter server port\n> ')
+  porty = int(input('Enter server port\n> '))
 
   this_inst.connect_to_server(ipy, porty)
   print('YAYYYY')
