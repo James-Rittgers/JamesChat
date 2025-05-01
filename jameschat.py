@@ -1,7 +1,6 @@
 import socket
 import sys
 from random import randint
-from time import sleep
 
 
 class Jameschat:
@@ -15,14 +14,6 @@ class Jameschat:
         self.recv_port = randint(1000, 1050)
         self.recv_socket.bind((self.ip_address, self.recv_port))
 
-        self.send_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-    def init_send(self, tgt_ip, tgt_port):
-        """
-        Initializes message sending
-        """
-        self.send_socket.connect((tgt_ip, tgt_port))
-
     def decode_msg(self, msg):
         """
         Decodes a message
@@ -32,14 +23,6 @@ class Jameschat:
         msg = msg.split("|")
         print(msg)
         return msg
-
-    def send(self, cmd, msg=None):
-        """
-        Sends msg to the tgt_port at tgt_address.
-        """
-        self.send_socket.send(
-            bytes(f"{self.ip_address}|{self.recv_port}|{cmd}|{msg}|", "UTF-8")
-        )
 
     def listen_for_cmd(self, cmd):
         """
@@ -120,13 +103,6 @@ class JameschatServer(Jameschat):
 
         self.client_dict.update({ip: sockety})
 
-    def ping(self):
-        """
-        Sends a PING command to all connected IPs
-        """
-        for item in self.client_list:
-            self.server_send(item["client_IP"], "PING")
-
     def allow_connection(self):
         """
         Allows connection.
@@ -141,6 +117,25 @@ class JameschatServer(Jameschat):
 
 
 class JameschatClient(Jameschat):
+
+    def __init__(self):
+
+        super().__init__()
+        self.send_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    def send(self, cmd, msg=None):
+        """
+        Sends msg to the tgt_port at tgt_address.
+        """
+        self.send_socket.send(
+            bytes(f"{self.ip_address}|{self.recv_port}|{cmd}|{msg}|", "UTF-8")
+        )
+
+    def init_send(self, tgt_ip, tgt_port):
+        """
+        Initializes message sending
+        """
+        self.send_socket.connect((tgt_ip, tgt_port))
 
     def connect_to_server(self, ip, port):
         """
@@ -157,7 +152,7 @@ class JameschatClient(Jameschat):
 
         return True
 
-    def pinged(self):
+    def ping(self):
         """
         Listens for ping then responds to server.
         """
