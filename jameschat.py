@@ -120,14 +120,16 @@ class JameschatServer(Jameschat):
     '''
     Adds a client to the client list
     '''
-  
+    sockety  = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sockety.connect((ip, int(port)))
+
     self.client_list.append({
       "client_IP": ip,
       "client_port": port,
-      "sendto_socket": socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((ip, int(port)))
+      "sendto_socket": sockety
     })
 
-    self.client_dict.update({ip:socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((ip, int(port)))})
+    self.client_dict.update({ip:sockety})
 
 
   
