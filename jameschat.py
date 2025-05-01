@@ -22,9 +22,16 @@ class Jameschat:
         msg = str(msg)
         msg = msg.split("|")
 
-        return msg
+        return_dict = {
+            "sender_ip": msg[0],
+            "sender_recv_port": msg[1],
+            "cmd": msg[2],
+            "msg": msg[3],
+        }
 
-    def listen_for_cmd(self, cmd):
+        return return_dict
+
+    def listen_for_cmd(self, tgt_cmd):
         """
         Listens for the specific command specified by cmd.
         Will run until timeout or it recieves the message.
@@ -37,11 +44,14 @@ class Jameschat:
             recv_buffer = connection.recv(64)
 
             if len(recv_buffer) > 0:
-                print('Something recieved')
+                print("Something recieved")
                 msg = self.decode_msg(recv_buffer)
 
-                if msg[2] == cmd:
+                if msg["cmd"] == tgt_cmd:
                     return msg
+
+                else:
+                    self.listen_for_cmd(tgt_cmd)
 
         except TimeoutError:
             print("Timeout")
@@ -102,10 +112,25 @@ class JameschatServer(Jameschat):
         """
 
         msg = self.listen_for_cmd("CLIENT-CONN")
-        self.add_client(msg[0], msg[1])
+        self.add_client(msg["sender_ip"], msg["sender_recv_port"])
 
-        self.server_send(msg[0], "CONN-OK")
+        self.server_send(msg["sender_ip"], "CONN-OK")
 
+    def listen_for_ping(self, msg=None):
+        """
+        Listens for ping.
+        Returns the message, if any, sent with the PING command
+        """
+
+        ping = self.listen_for_cmd("PING")
+
+        self.server_send(ping["sender_ip"], "PING-RESP", msg=msg)
+
+        if ping["msg"] is not None:
+            return ping["msg"]
+        
+        else:
+            return None
 
 class JameschatClient(Jameschat):
 
@@ -143,8 +168,10 @@ class JameschatClient(Jameschat):
 
         return True
 
-    def ping(self):
+    def ping(self, msg=None):
         """
-        Listens for ping then responds to server.
+        Pings server and waits for response.
         """
-        self.listen_for_cmd("PING")
+        self.send("PING", msg=msg)
+
+        self.listen_for_cmd("PING-RESP")
