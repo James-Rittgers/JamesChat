@@ -100,17 +100,19 @@ class JameschatServer(Jameschat):
   def __init__(self):
     super().__init__()
     self.client_list = []
-    self.ips = {}
+    self.client_dict = {}
 
 
-  def server_send(self, client_num, cmd, msg):
+
+  def server_send(self, ip, cmd, msg=None):
     '''
     Server sending, sends to client specified by IP and port
     '''
-    sockety = self.client_list[client_num]
-    sockety = sockety['sendto_socket']
+    print(self.client_dict)
+    sockety = self.client_dict[ip]
+    print(sockety)
 
-    sockety.send(bytes(f'{self.ip_address}|{self.recv_port}|{cmd}|{msg}|',
+    sockety.send(bytes(f'{self.ip_address}|{self.recv_port}|{cmd}|{msg}',
                       'UTF-8'))
 
 
@@ -118,13 +120,15 @@ class JameschatServer(Jameschat):
     '''
     Adds a client to the client list
     '''
+  
     self.client_list.append({
       "client_IP": ip,
       "client_port": port,
-      "sendto_socket": socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect(ip, port)
+      "sendto_socket": socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((ip, int(port)))
     })
 
-    self.ips[ip:len(self.client_list) -1]
+    self.client_dict.update({ip:socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((ip, int(port)))})
+
 
   
   def ping(self):
@@ -132,7 +136,7 @@ class JameschatServer(Jameschat):
     Sends a PING command to all connected IPs
     '''
     for item in self.client_list:
-      self.server_send(item['client_IP'], item['client_port'], 'PING')
+      self.server_send(item['client_IP'], 'PING')
 
   def allow_connection(self):
     '''
@@ -144,7 +148,7 @@ class JameschatServer(Jameschat):
     print(msg)
     self.add_client(msg[0], msg[1])
 
-    self.server_send(self.ips[msg[0]])
+    self.server_send(msg[0], 'CONN-OK')
 
 
 
@@ -159,7 +163,6 @@ class JameschatClient(Jameschat):
     '''
 
     self.init_send(ip, port)
-
 
     self.send(cmd='CLIENT-CONN')
 
