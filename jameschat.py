@@ -15,7 +15,7 @@ class Jameschat:
         self.recv_socket.bind((self.ip_address, self.recv_port))
 
         self.username = None
-    
+
     def set_username(self, username):
         """
         Sets the username
@@ -108,12 +108,11 @@ class JameschatServer(Jameschat):
         sockety = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sockety.connect((ip, int(port)))
 
-
         self.client_dict.update({ip: sockety})
-        self.usernames.update({ip:username})
+        self.usernames.update({ip: username})
 
-        print(f'client_dict: {self.client_dict}')
-        print(f'usernames: {self.usernames}')
+        print(f"client_dict: {self.client_dict}")
+        print(f"usernames: {self.usernames}")
 
     def allow_connection(self):
         """
@@ -125,6 +124,7 @@ class JameschatServer(Jameschat):
         self.add_client(msg["sender_ip"], msg["sender_recv_port"], msg["msg"])
 
         self.server_send(msg["sender_ip"], "CONN-OK")
+
 
 class JameschatClient(Jameschat):
 
