@@ -14,6 +14,15 @@ class Jameschat:
         self.recv_port = randint(1000, 1050)
         self.recv_socket.bind((self.ip_address, self.recv_port))
 
+        self.username = None
+    
+    def set_username(self, username):
+        """
+        Sets the username
+        """
+
+        self.username = username
+
     def decode_msg(self, msg):
         """
         Decodes a message
@@ -81,8 +90,8 @@ class JameschatServer(Jameschat):
 
     def __init__(self):
         super().__init__()
-        self.client_list = []
         self.client_dict = {}
+        self.usernames = {self.ip_address: self.username}
 
     def server_send(self, ip, cmd, msg=None):
         """
@@ -92,18 +101,19 @@ class JameschatServer(Jameschat):
 
         sockety.send(bytes(f"{self.ip_address}|{self.recv_port}|{cmd}|{msg}", "UTF-8"))
 
-    def add_client(self, ip, port):
+    def add_client(self, ip, port, username):
         """
         Adds a client to the client list
         """
         sockety = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sockety.connect((ip, int(port)))
 
-        self.client_list.append(
-            {"client_IP": ip, "client_port": port, "sendto_socket": sockety}
-        )
 
         self.client_dict.update({ip: sockety})
+        self.usernames.update({ip:username})
+
+        print(f'client_dict: {self.client_dict}')
+        print(f'usernames: {self.usernames}')
 
     def allow_connection(self):
         """
@@ -112,25 +122,9 @@ class JameschatServer(Jameschat):
         """
 
         msg = self.listen_for_cmd("CLIENT-CONN")
-        self.add_client(msg["sender_ip"], msg["sender_recv_port"])
+        self.add_client(msg["sender_ip"], msg["sender_recv_port"], msg["msg"])
 
         self.server_send(msg["sender_ip"], "CONN-OK")
-
-    def listen_for_ping(self, msg=None):
-        """
-        Listens for ping.
-        Returns the message, if any, sent with the PING command
-        """
-
-        ping = self.listen_for_cmd("PING")
-
-        self.server_send(ping["sender_ip"], "PING-RESP", msg=msg)
-
-        if ping["msg"] is not None:
-            return ping["msg"]
-        
-        else:
-            return None
 
 class JameschatClient(Jameschat):
 
@@ -167,11 +161,3 @@ class JameschatClient(Jameschat):
         self.listen_for_cmd("CONN-OK")
 
         return True
-
-    def ping(self, msg=None):
-        """
-        Pings server and waits for response.
-        """
-        self.send("PING", msg=msg)
-
-        self.listen_for_cmd("PING-RESP")
