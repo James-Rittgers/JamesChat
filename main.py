@@ -11,7 +11,7 @@ def main():
     if choice == "1":
 
         this_inst = jameschat.JameschatServer()
-        this_inst.set_username(username)
+        this_inst.username = username
         ip_address = this_inst.ip_address
         port = this_inst.recv_port
 
@@ -26,7 +26,7 @@ def main():
     elif choice == "2":
 
         this_inst = jameschat.JameschatClient()
-        this_inst.set_username(username)
+        this_inst.username = username
         ipy = input("Enter server IP\n> ")
         porty = int(input("Enter server port\n> "))
 
