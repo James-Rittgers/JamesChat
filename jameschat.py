@@ -93,6 +93,14 @@ class JameschatServer(Jameschat):
         self.client_dict = {}
         self.usernames = {self.ip_address: self.username}
 
+    def set_username(self, username):
+        """
+        Sets the username
+        """
+
+        self.username = username
+        self.usernames[self.ip_address] = username
+
     def server_send(self, ip, cmd, msg=None):
         """
         Server sending, sends to client specified by IP and port
@@ -156,7 +164,7 @@ class JameschatClient(Jameschat):
 
         self.init_send(ip, port)
 
-        self.send(cmd="CLIENT-CONN")
+        self.send(cmd="CLIENT-CONN", msg=self.username)
 
         self.listen_for_cmd("CONN-OK")
 
