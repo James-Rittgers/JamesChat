@@ -1,6 +1,7 @@
 import socket
 import sys
 from random import randint
+from time import sleep
 
 
 class Jameschat:
@@ -14,7 +15,10 @@ class Jameschat:
         self.recv_port = randint(1000, 1050)
         self.recv_socket.bind((self.ip_address, self.recv_port))
 
+
+
         self.username = None
+        self.chatlog = ''
 
     def set_username(self, username):
         """
@@ -46,6 +50,7 @@ class Jameschat:
         Will run until timeout or it recieves the message.
         Returns the message.
         """
+
         self.recv_socket.listen(5)
 
         try:
@@ -64,7 +69,7 @@ class Jameschat:
 
         except TimeoutError:
             print("Timeout")
-            sys.exit()
+            #sys.exit()
 
     def listen(self):
         """
@@ -100,6 +105,23 @@ class JameschatServer(Jameschat):
 
         self.username = username
         self.usernames[self.ip_address] = username
+        print(f'{self.username} has joined the chat')
+
+    def send_to_all(self, cmd, msg=None):
+        """
+        Sends a message to all connected hosts
+        """
+
+        for host in self.client_dict:
+            self.server_send(host[1], cmd, msg)
+
+    def add_msg_to_chatlog(self, msg):
+        """
+        Adds a new message to the chatlog, then sends out to all connected hosts
+        """
+
+        self.chatlog += f'\n{msg}'
+        self.send_to_all(cmd='CHT-ENTRY', msg=msg)
 
     def server_send(self, ip, cmd, msg=None):
         """
@@ -119,9 +141,6 @@ class JameschatServer(Jameschat):
         self.client_dict.update({ip: sockety})
         self.usernames.update({ip: username})
 
-        print(f"client_dict: {self.client_dict}")
-        print(f"usernames: {self.usernames}")
-
     def allow_connection(self):
         """
         Allows connection.
@@ -132,6 +151,28 @@ class JameschatServer(Jameschat):
         self.add_client(msg["sender_ip"], msg["sender_recv_port"], msg["msg"])
 
         self.server_send(msg["sender_ip"], "CONN-OK")
+        print(f'{msg[msg]} has joined the chat')
+
+    def run_networking(self):
+
+        while True:
+            inbound = self.listen()
+            command = inbound["cmd"]
+            message = inbound["msg"]
+
+
+            if command == "NW-MSG":
+                self.add_msg_to_chatlog(message)
+                print(message)
+
+            elif command == "CLIENT-CONN":
+                self.add_client(inbound["sender_ip"], inbound["sender_recv_port"], message)
+                self.server_send(inbound["sender_ip"], "CONN-OK")
+                print(f'\n{message} has joined the chat')
+
+            sleep(0.5)
+
+            
 
 
 class JameschatClient(Jameschat):
@@ -169,3 +210,15 @@ class JameschatClient(Jameschat):
         self.listen_for_cmd("CONN-OK")
 
         return True
+    
+    def run_networking(self):
+
+        while True:
+            inbound = self.listen()
+            command = inbound["cmd"]
+            message = inbound["msg"]
+
+
+            if command == "CHT-ENTRY":
+                self.chatlog += message
+                print(message)

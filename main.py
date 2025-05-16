@@ -1,5 +1,15 @@
 import jameschat
+import threading 
+import sys
 
+def get_user_input():
+    
+    while True:
+        try:
+            input('> ')
+
+        except EOFError:
+            print("\nCtrl+C doesn't work :(")
 
 def main():
     print("Welcome to JamesChat!")
@@ -12,17 +22,11 @@ def main():
 
         this_inst = jameschat.JameschatServer()
         this_inst.set_username(username)
-        print(this_inst.usernames)
         ip_address = this_inst.ip_address
         port = this_inst.recv_port
 
         print("Hosting a chat\n")
         print(f"Your IP: {ip_address}\nYour port: {port}")
-
-        while True:
-            print("\n Allowing Connection...")
-            this_inst.allow_connection()
-            print("Connection Successful!")
 
     elif choice == "2":
 
@@ -34,6 +38,11 @@ def main():
         this_inst.connect_to_server(ipy, porty)
         print("Connection Successful!")
 
+    network_thread = threading.Thread(target=this_inst.run_networking)
+    input_thread = threading.Thread(target=get_user_input) 
+
+    input_thread.start()
+    network_thread.start()
 
 if __name__ == "__main__":
     main()
